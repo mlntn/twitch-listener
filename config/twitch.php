@@ -1,6 +1,6 @@
 <?php
 
-// Setup at: http://www.twitch.tv/kraken/oauth2/clients
+// Setup at: http://www.twitch.tv/kraken/oauth2/clients/new
 
 return [
 
