@@ -22,8 +22,3 @@ Route::get('/', function (TwitchConnector $twitch) {
 Route::get('/register', function (TwitchConnector $twitch) {
   return $twitch->register(['chat_login', 'user_read']);
 });
-
-Route::get('/listen', function (Chatter $chatter) {
-  $chatter->login('mlntn', request('token'), 'mlntn');
-  $chatter->listen();
-});

@@ -11,19 +11,19 @@ class Chatter {
 
   public function __construct($private = false) {
     ini_set('output_buffering', 0);
-    $this->private = $private;
+    $this->private = empty($private) === false;
     list($server, $port) = explode(':', $this->getServer());
     $this->socket = fsockopen($server, $port);
   }
 
   public function getServer() {
     if ($this->private) {
-      return config('irc.server');
+      $data = json_decode(file_get_contents('http://tmi.twitch.tv/servers?cluster=group'));
+
+      return array_shift($data->servers);
     }
 
-    $data = json_decode(file_get_contents('http://tmi.twitch.tv/servers?cluster=group'));
-
-    return array_shift($data->servers);
+    return config('irc.server');
   }
 
   public function login($username, $password) {
@@ -118,13 +118,17 @@ class Chatter {
   }
 
   private function keyword($channel, $keyword, $params, $user, $whisper = false) {
-    $class    = "\\App\\Keywords\\" . ($whisper ? 'Whispers\\' : '') . $keyword;
+    $class    = "\\App\\Keywords\\" . ($whisper ? 'Whispers\\' : '') . $keyword . 'Keyword';
 
     if (class_exists($class) === false) {
       return false;
     }
 
     $instance = new $class($this, $channel, $user);
+
+    array_walk($params, function(&$v) {
+      $v = trim($v);
+    });
 
     return call_user_func_array([$instance, 'handle'], $params);
   }
