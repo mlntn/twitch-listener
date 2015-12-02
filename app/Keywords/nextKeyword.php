@@ -11,10 +11,10 @@ class nextKeyword extends Keyword {
   public function handle() {
     try {
       $code = Code::where('status_id', Status::WAITING)->orderBy('created_at')->firstOrFail();
-      $this->chatter->say("NEXT LEVEL: {$code->code} by {$code->user} (submitted {$code->created_at->diffForHumans()})", $this->channel);
+      $this->chatter->say(trans('code.next.success', ['code'=>$code->code, 'user'=>$code->user, 'submitted'=>$code->created_at->diffForHumans()]), $this->channel);
     }
     catch (\Exception $e) {
-      $this->chatter->say("The queue is empty.", $this->channel);
+      $this->chatter->say(trans('code.next.failure'), $this->channel);
     }
   }
 

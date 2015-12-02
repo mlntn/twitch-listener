@@ -130,7 +130,12 @@ class Chatter {
       $v = trim($v);
     });
 
-    return call_user_func_array([$instance, 'handle'], $params);
+    try {
+      return call_user_func_array([$instance, 'handle'], $params);
+    }
+    catch (\Exception $e) {
+      // noop
+    }
   }
 
   private function parseMessage($parts) {
