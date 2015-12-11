@@ -5,6 +5,7 @@ namespace App\Plugins;
 use App\Exceptions\KeywordNotFoundException;
 use App\Exceptions\UserNotFoundException;
 use App\Models\Keyword;
+use App\Models\User;
 use App\Plugin;
 
 class Blabber extends Plugin {
@@ -20,7 +21,7 @@ class Blabber extends Plugin {
       }
       catch (KeywordNotFoundException $e) {
         $kw = new Keyword;
-        $kw->setUser($this->channel);
+        $kw->user_id = User::findByChannel($this->channel)->id;
         $kw->keyword = $keyword;
       }
       $kw->method = 'Blabber@blab';
@@ -31,22 +32,20 @@ class Blabber extends Plugin {
       $this->say("ADDED: !{$keyword} -> {$text}");
     }
     catch (UserNotFoundException $e) {
-      // noop, I guess
+      // noop
     }
   }
 
   public function remove($keyword) {
     try {
       $kw = Keyword::findByChannelKeyword($this->channel, $keyword);
-      if ($kw->method !== 'Blabber@blab') {
-        return;
+      if ($kw->method === 'Blabber@blab') {
+        $text = $kw->text;
+
+        $kw->destroy();
+
+        $this->say("REMOVED: !{$keyword} -> {$text}");
       }
-
-      $text = $kw->text;
-
-      $kw->destroy();
-
-      $this->say("REMOVED: !{$keyword} -> {$text}");
     }
     catch (KeywordNotFoundException $e) {
       // noop

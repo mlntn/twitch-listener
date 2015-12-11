@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Exceptions\KeywordNotFoundException;
-use App\Exceptions\UserNotFoundException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -18,17 +17,6 @@ class Keyword extends Model {
     }
     catch (ModelNotFoundException $e) {
       throw new KeywordNotFoundException;
-    }
-  }
-
-  public function setUser($channel) {
-    try {
-      $user = preg_replace('~^#~', '', $channel);
-      $u = User::whereTwitchUsername($user)->firstOrFail();
-      $this->user_id = $u->id;
-    }
-    catch (ModelNotFoundException $e) {
-      throw new UserNotFoundException;
     }
   }
 
