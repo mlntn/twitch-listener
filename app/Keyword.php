@@ -2,20 +2,25 @@
 
 namespace App;
 
+use App\Exceptions\KeywordNotFoundException;
+use App\Models\Keyword as KeywordModel;
 use App\Services\Chatter;
 
 abstract class Keyword {
 
-  /**
-   * @var Chatter
-   */
-  protected $chatter;
-  protected $channel;
-  protected $user;
+  public static function call($channel, $keyword, $user, Chatter $chatter, $params) {
+    try {
+      $kw = KeywordModel::findByChannelKeyword($channel, $keyword);
+      list($class, $method) = explode('@', $kw->method);
+      $class = '\App\Plugins\\' . $class;
 
-  public function __construct(Chatter $chatter, $channel, $user) {
-    $this->chatter = $chatter;
-    $this->channel = $channel;
-    $this->user = $user;
+      $plugin = new $class($chatter, $kw, $channel, $user);
+
+      call_user_func_array([$plugin, $method], $params);
+    }
+    catch (KeywordNotFoundException $e) {
+      echo "{$channel}: What's {$keyword}?";
+    }
   }
+
 }

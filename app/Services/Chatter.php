@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Keyword;
+
 class Chatter {
 
   public $socket;
@@ -102,8 +104,9 @@ class Chatter {
         echo ($is_whisper ? '*' : '') . "{$user}: {$message}\n";
         if (preg_match('~^:\!(\w+)\b~', $parts[3], $pieces)) {
           $keyword = $pieces[1];
+          $channel = $parts[2];
           $params  = array_slice($parts, 4);
-          $this->keyword($parts[2], $keyword, $params, $user, $is_whisper);
+          Keyword::call($channel, $keyword, $user, $this, $params);
         }
         break;
       case '353':
@@ -115,27 +118,6 @@ class Chatter {
 
   private function getUser($ircuser) {
     return preg_replace('~^:\w+!(\w+)@\w+.tmi.twitch.tv$~', '$1', $ircuser);
-  }
-
-  private function keyword($channel, $keyword, $params, $user, $whisper = false) {
-    $class    = "\\App\\Keywords\\" . ($whisper ? 'Whispers\\' : '') . $keyword . 'Keyword';
-
-    if (class_exists($class) === false) {
-      return false;
-    }
-
-    $instance = new $class($this, $channel, $user);
-
-    array_walk($params, function(&$v) {
-      $v = trim($v);
-    });
-
-    try {
-      return call_user_func_array([$instance, 'handle'], $params);
-    }
-    catch (\Exception $e) {
-      // noop
-    }
   }
 
   private function parseMessage($parts) {
