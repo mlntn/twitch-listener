@@ -83,7 +83,7 @@ class Chatter {
   }
 
   private function handle($message) {
-    $parts = explode(' ', $message);
+    $parts = str_getcsv($message, ' ', '"', '\\');
 
     echo $message . PHP_EOL;
 
@@ -106,7 +106,13 @@ class Chatter {
           $keyword = $pieces[1];
           $channel = $parts[2];
           $params  = array_slice($parts, 4);
-          Keyword::call($channel, $keyword, $user, $this, $params);
+          try {
+            Keyword::call($channel, $keyword, $user, $this, $params);
+          }
+          catch (\Exception $e) {
+            // noop if anything breaks
+            // die(var_dump($e)); // in case we need to debug
+          }
         }
         break;
       case '353':
