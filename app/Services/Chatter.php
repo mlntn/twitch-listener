@@ -105,7 +105,8 @@ class Chatter {
         if (preg_match('~^:\!(\w+)\b~', $parts[3], $pieces)) {
           $keyword = $pieces[1];
           $channel = $parts[2];
-          $params  = array_slice($parts, 4);
+          $params = array_slice($parts, 4);
+          array_walk($params, function(&$v){ $v = str_replace('\\"', '"', $v); });
           try {
             Keyword::call($channel, $keyword, $user, $this, $params);
           }
