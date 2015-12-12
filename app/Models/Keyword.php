@@ -13,6 +13,7 @@ class Keyword extends Model {
   public static function findByChannelKeyword($channel, $keyword) {
     try {
       $user = preg_replace('~^#~', '', $channel);
+
       return static::join('user', 'user_id', '=', 'user.id')->whereTwitchUsername($user)->whereKeyword($keyword)->firstOrFail();
     }
     catch (ModelNotFoundException $e) {

@@ -16,6 +16,7 @@ class CreateKeywordTable extends Migration {
       $table->string('keyword');
       $table->string('method');
       $table->text('text')->nullable();
+      $table->integer('role_mask')->default(1);
       $table->timestamps();
     });
   }

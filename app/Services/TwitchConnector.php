@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\Role;
+use App\Models\User;
+
 class TwitchConnector {
 
   public $token;
@@ -56,6 +59,77 @@ class TwitchConnector {
     return $this->get('user');
   }
 
+  public function getUserRoleMask($user, $channel) {
+    $ch = curl_init("http://tmi.twitch.tv/group/user/{$channel}/chatters");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $json = curl_exec($ch);
+    curl_close($ch);
+
+    $chatters = json_decode($json);
+
+    $map = [
+      'moderators' => Role::MODERATOR,
+      'staff' => Role::STAFF,
+    ];
+
+    $role_mask = 1; // everyone is a viewer
+
+    foreach ((array) $chatters->chatters as $k=>$users) {
+      if (in_array($user, $users) && array_key_exists($k, $map)) {
+        $role_mask += $map[$k];
+      }
+    }
+
+    if ($user === $channel) {
+      $role_mask += Role::OWNER;
+    }
+
+    $this->setTokenFromChannel($channel);
+    $response = $this->get("channels/{$channel}/subscriptions/{$user}");
+    if(isset($response->status) === false) {
+      $role_mask += Role::SUBSCRIBER;
+    }
+
+    $this->setTokenFromChannel($channel);
+    $response = $this->get("users/{$user}/follows/channels/{$channel}");
+    if(isset($response->status) === false) {
+      $role_mask += Role::FOLLOWER;
+    }
+
+    return $role_mask;
+  }
+
+  public function checkUserRole($user, $channel, $role) {
+    switch ($role) {
+      case Role::VIEWER:
+        return true;
+      case Role::FOLLOWER:
+        $response = $this->get("users/{$user}/follows/channels/{$channel}");
+
+        return isset($response->status) === false;
+      case Role::SUBSCRIBER:
+        $this->setTokenFromChannel($channel);
+        $response = $this->get("channels/{$channel}/subscriptions/{$user}");
+
+        return isset($response->status) === false;
+      case Role::MODERATOR:
+        return $this->checkChatters($channel, $user, 'moderators');
+      case Role::OWNER:
+        return $user === $channel;
+      case Role::STAFF:
+        return $this->checkChatters($channel, $user, 'staff');
+      default:
+        return false;
+    }
+  }
+
+  private function checkChatters($channel, $user, $group) {
+    $json = file_get_contents("http://tmi.twitch.tv/group/user/{$channel}/chatters");
+    $chatters = json_decode($json);
+
+    return in_array($user, $chatters->chatters->$group);
+  }
+
   private function get($uri) {
     $ch = curl_init('https://api.twitch.tv/kraken/' . $uri);
 
@@ -69,6 +143,12 @@ class TwitchConnector {
     $data = curl_exec($ch);
 
     return json_decode($data) ?: $data;
+  }
+
+  private function setTokenFromChannel($channel) {
+    $user = User::whereTwitchUsername($channel)->firstOrFail();
+
+    $this->token = $user->twitch_token;
   }
 
 }

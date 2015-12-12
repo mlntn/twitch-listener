@@ -1,6 +1,5 @@
 <?php
 
-use App\Services\Chatter;
 use App\Services\TwitchConnector;
 use App\User;
 
@@ -20,5 +19,5 @@ Route::get('/', function (TwitchConnector $twitch) {
 });
 
 Route::get('/register', function (TwitchConnector $twitch) {
-  return $twitch->register(['chat_login', 'user_read']);
+  return $twitch->register(['chat_login', 'user_read', 'channel_check_subscription']);
 });

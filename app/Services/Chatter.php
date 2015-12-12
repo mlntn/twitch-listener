@@ -120,6 +120,7 @@ class Chatter {
         $channel = $parts[4];
         $this->channels[$channel] = $channel;
         echo "Joined {$channel}\n";
+        break;
     }
   }
 
